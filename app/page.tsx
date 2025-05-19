@@ -45,16 +45,16 @@ export default function Home() {
 
   return (
     <main className="container">
-      <h1 className="text-3xl font-bold mb-6">🔥 YouTube 急上昇動画検索</h1>
-      <p className="mb-4">キーワードを入力して、関連する急上昇中の動画を表示します。</p>
+      <h1 className="page-title text-3xl font-bold">🔥 YouTube 急上昇動画検索</h1>
+      <p className="page-description">キーワードを入力して、関連する急上昇中の動画を表示します。</p>
       
-      <div className="flex flex-col md:flex-row gap-2 mb-6">
+      <div className="search-form">
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="検索キーワードを入力"
-          className="px-4 py-2 rounded border border-gray-700 bg-gray-800 text-white flex-grow"
+          className="px-4 py-2 rounded-md border border-gray-600 bg-gray-800 text-white"
           onKeyDown={(e) => e.key === 'Enter' && fetchTrendingVideos()}
         />
         
@@ -63,8 +63,8 @@ export default function Home() {
           onClick={fetchTrendingVideos}
           disabled={isLoading}
         >
-          検索
-          {isLoading && <span className="loading"></span>}
+          {isLoading ? '検索中...' : '検索'}
+          {isLoading && <span className="loading ml-2"></span>}
         </button>
       </div>
       

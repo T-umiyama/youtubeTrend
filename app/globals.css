@@ -30,6 +30,9 @@ body {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .video-card {
@@ -56,6 +59,11 @@ body {
   font-size: 1rem;
   font-weight: 500;
   transition: background-color 0.2s;
+  min-width: 100px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button:hover {
@@ -81,5 +89,66 @@ body {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* 入力欄のカスタムスタイル */
+input[type="text"] {
+  min-height: 48px;
+  width: 100%;
+  font-size: 1.5rem;
+  border: 10px solid #000000;
+}
+
+@media (min-width: 768px) {
+  input[type="text"] {
+    min-width: 300px;
+  }
+}
+
+/* タイトルと説明のスタイル */
+.page-title {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-description {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* 検索フォーム関連のスタイル */
+.search-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.search-form input[type="text"] {
+  width: 100%;
+  max-width: 800px;
+  min-height: 48px;
+  font-size: 1.5rem;
+  border: 1px solid #444;
+  margin-bottom: 1rem;
+}
+
+.search-form .button {
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .search-form {
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .search-form input[type="text"] {
+    margin-bottom: 0;
   }
 }
