@@ -75,6 +75,26 @@ body {
   cursor: not-allowed;
 }
 
+/* YouTube視聴ボタンのスタイル */
+.youtube-link {
+  background-color: #ff0000;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.youtube-link:hover {
+  background-color: #cc0000;
+  text-decoration: none;
+}
+
 .loading {
   display: inline-block;
   width: 1.5rem;

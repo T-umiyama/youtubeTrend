@@ -43,9 +43,17 @@ export default function Home() {
     }
   };
 
+  // 日付から経過日数を計算する関数
+  const getDaysAgo = (dateString: string): number => {
+    const publishedDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = today.getTime() - publishedDate.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  };
+
   return (
     <main className="container">
-      <h1 className="page-title text-3xl font-bold">🔥 YouTube 急上昇動画検索</h1>
+      <h1 className="page-title text-3xl font-bold">🔥YouTube 急上昇動画検索ツール 🔥</h1>
       <p className="page-description">キーワードを入力して、関連する急上昇中の動画を表示します。</p>
       
       <div className="search-form">
@@ -88,21 +96,26 @@ export default function Home() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold mb-2">{video.title}</h2>
-                  <p className="text-gray-300 mb-1">{video.channelTitle}</p>
+                  <p className="text-gray-300 mb-1">チャンネル名: {video.channelTitle}</p>
                   <div className="flex gap-4 text-sm text-gray-400 mb-1">
-                    <p>公開日: {new Date(video.publishedAt).toLocaleDateString()}</p>
+                    <p>公開日: {new Date(video.publishedAt).toLocaleDateString()} （{getDaysAgo(video.publishedAt)}日前）</p>
                     <p>再生回数: {parseInt(video.viewCount).toLocaleString()}</p>
                   </div>
                   {video.risingScore && (
-                    <p className="text-yellow-400 font-medium mb-1">
-                      急上昇度: {Math.round(video.risingScore).toLocaleString()}
-                    </p>
+                    <>
+                      <p className="text-yellow-400 font-medium mb-1">
+                        急上昇度: {Math.round(video.risingScore).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-2">
+                        ※急上昇度 ＝再生数 ÷ 経過日数
+                      </p>
+                    </>
                   )}
                   <a 
                     href={`https://www.youtube.com/watch?v=${video.id}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="mt-2 inline-block text-red-500 hover:underline"
+                    className="youtube-link mt-2"
                   >
                     YouTubeで視聴 →
                   </a>
