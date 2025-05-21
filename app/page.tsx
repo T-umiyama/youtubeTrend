@@ -71,8 +71,7 @@ export default function Home() {
           onClick={fetchTrendingVideos}
           disabled={isLoading}
         >
-          {isLoading ? '検索中...' : '検索'}
-          {isLoading && <span className="loading ml-2"></span>}
+          {isLoading ? <span className="loading"></span> : '検索'}
         </button>
       </div>
       
