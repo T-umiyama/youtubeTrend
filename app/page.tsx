@@ -10,13 +10,18 @@ interface Video {
   thumbnailUrl: string;
   viewCount: string;
   risingScore?: number; // 急上昇度
+  duration?: string; // 動画の長さ
 }
+
+// 動画タイプを管理するための型
+type VideoType = "short" | "long";
 
 export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [videoType, setVideoType] = useState<VideoType>("long"); // デフォルトはロング動画
 
   const fetchTrendingVideos = async () => {
     if (!keyword.trim()) {
@@ -28,7 +33,8 @@ export default function Home() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/youtube-trends?keyword=${encodeURIComponent(keyword)}`);
+      // クエリパラメータにビデオタイプを追加
+      const response = await fetch(`/api/youtube-trends?keyword=${encodeURIComponent(keyword)}&type=${videoType}`);
       
       if (!response.ok) {
         throw new Error("データの取得に失敗しました");
@@ -51,10 +57,15 @@ export default function Home() {
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  // ビデオタイプを切り替える関数
+  const toggleVideoType = () => {
+    setVideoType(prevType => prevType === "short" ? "long" : "short");
+  };
+
   return (
     <main className="container">
-      <h1 className="page-title text-3xl font-bold">🔥YouTube 急上昇動画検索ツール 🔥</h1>
-      <p className="page-description">キーワードを入力して、関連する急上昇中の動画を表示します。</p>
+      <h1 className="page-title">✨🔥 YouTubeトレンドハンター 🔥✨</h1>
+      <p className="page-description">気になるワードを入れるだけ！今アツい動画をサクッと発見！💫</p>
       
       <div className="search-form">
         <input
@@ -62,12 +73,23 @@ export default function Home() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="検索キーワードを入力"
-          className="px-4 py-2 rounded-md border border-gray-600 bg-gray-800 text-white"
           onKeyDown={(e) => e.key === 'Enter' && fetchTrendingVideos()}
         />
         
+        <div className="toggle-container">
+          <label className="toggle-switch">
+            <input 
+              type="checkbox" 
+              checked={videoType === "short"} 
+              onChange={toggleVideoType}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+          <span className="toggle-label">{videoType === "short" ? "ショート動画" : "ロング動画"}</span>
+        </div>
+        
         <button 
-          className="button" 
+          className="button"
           onClick={fetchTrendingVideos}
           disabled={isLoading}
         >
@@ -82,45 +104,46 @@ export default function Home() {
       )}
       
       {videos.length > 0 && (
-        <div className="grid gap-4">
+        <div className="grid gap-4 w-full">
           {videos.map((video) => (
-            <div key={video.id} className="video-card">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-shrink-0">
-                  <img 
-                    src={video.thumbnailUrl} 
-                    alt={video.title} 
-                    className="w-full md:w-48 h-auto rounded"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold mb-2">{video.title}</h2>
-                  <p className="text-gray-300 mb-1">チャンネル名: {video.channelTitle}</p>
-                  <div className="flex gap-4 text-sm text-gray-400 mb-1">
-                    <p>公開日: {new Date(video.publishedAt).toLocaleDateString()} （{getDaysAgo(video.publishedAt)}日前）</p>
-                    <p>再生回数: {parseInt(video.viewCount).toLocaleString()}</p>
+            <a
+              key={video.id}
+              href={`https://www.youtube.com/watch?v=${video.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="video-card-link"
+            >
+              <div className="video-card">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={video.thumbnailUrl} 
+                      alt={video.title} 
+                      className="w-full md:w-48 h-auto"
+                    />
                   </div>
-                  {video.risingScore && (
-                    <>
-                      <p className="text-yellow-400 font-medium mb-1">
-                        急上昇度: {Math.round(video.risingScore).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500 mb-2">
-                        ※急上昇度 ＝再生数 ÷ 経過日数
-                      </p>
-                    </>
-                  )}
-                  <a 
-                    href={`https://www.youtube.com/watch?v=${video.id}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="youtube-link mt-2"
-                  >
-                    YouTubeで視聴 →
-                  </a>
+                  <div className="video-info">
+                    <h2>{video.title}</h2>
+                    <p className="text-gray-300">チャンネル名: {video.channelTitle}</p>
+                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm text-gray-400">
+                      <p>公開日: {new Date(video.publishedAt).toLocaleDateString()} （{getDaysAgo(video.publishedAt)}日前）</p>
+                      <p>再生回数: {parseInt(video.viewCount).toLocaleString()}</p>
+                      {video.duration && <p>長さ: {video.duration}</p>}
+                    </div>
+                    {video.risingScore && (
+                      <>
+                        <p className="text-yellow-400">
+                          急上昇度: {Math.round(video.risingScore).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ※急上昇度 ＝再生数 ÷ 経過日数
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       )}

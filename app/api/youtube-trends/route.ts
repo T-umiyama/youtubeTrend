@@ -17,6 +17,34 @@ function calculateRisingScore(viewCount: number, publishedAt: string): number {
   return viewCount / effectiveDays;
 }
 
+// ISO 8601形式の動画時間を読みやすい形式に変換
+function formatDuration(isoDuration: string): string {
+  // PT1H23M45S のような形式から時間、分、秒を抽出
+  const matches = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!matches) return '';
+  
+  const hours = matches[1] ? `${matches[1]}時間` : '';
+  const minutes = matches[2] ? `${matches[2]}分` : '';
+  const seconds = matches[3] ? `${matches[3]}秒` : '';
+  
+  return `${hours}${minutes}${seconds}`;
+}
+
+// 動画がショート動画かどうかを判定
+function isShortVideo(duration: string): boolean {
+  // PT5M以下ならショート動画と判定（5分以下）
+  // より正確な判定には他の要素も必要かもしれませんが、簡易的な判定として
+  const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!matches) return false;
+  
+  const hours = parseInt(matches[1] || '0');
+  const minutes = parseInt(matches[2] || '0');
+  const seconds = parseInt(matches[3] || '0');
+  
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  return totalSeconds <= 300; // 5分 = 300秒
+}
+
 export async function GET(request: NextRequest) {
   try {
     // YouTube Data API v3 の API キー
@@ -29,9 +57,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // URLからキーワードパラメータを取得
+    // URLからパラメータを取得
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword');
+    const type = searchParams.get('type') || 'long'; // デフォルトはロング動画
 
     if (!keyword) {
       return NextResponse.json(
@@ -46,7 +75,7 @@ export async function GET(request: NextRequest) {
     
     // ステップ1: Search API で特定キーワードの7日以上前の動画を検索
     const searchResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(keyword)}&type=video&order=viewCount&publishedAfter=${encodeURIComponent(thirtyDaysAgo.toISOString())}&publishedBefore=${encodeURIComponent(sevenDaysAgo.toISOString())}&maxResults=25&key=${apiKey}`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(keyword)}&type=video&order=viewCount&publishedAfter=${encodeURIComponent(thirtyDaysAgo.toISOString())}&publishedBefore=${encodeURIComponent(sevenDaysAgo.toISOString())}&maxResults=50&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
 
@@ -63,9 +92,9 @@ export async function GET(request: NextRequest) {
     // 検索結果から動画IDを抽出
     const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
 
-    // ステップ2: Videos API で詳細情報を取得（視聴回数などを含む）
+    // ステップ2: Videos API で詳細情報を取得（視聴回数と動画の長さなど）
     const videosResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${apiKey}`,
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
 
@@ -75,10 +104,12 @@ export async function GET(request: NextRequest) {
 
     const videosData = await videosResponse.json();
 
-    // ステップ3: 急上昇度を計算してソート
-    const formattedItems = videosData.items.map((item: any) => {
+    // ステップ3: 動画のタイプでフィルタリングし、急上昇度を計算してソート
+    let formattedItems = videosData.items.map((item: any) => {
       const viewCount = parseInt(item.statistics.viewCount || "0");
       const publishedAt = item.snippet.publishedAt;
+      const duration = item.contentDetails.duration;
+      const isShort = isShortVideo(duration);
       
       return {
         id: item.id,
@@ -87,9 +118,18 @@ export async function GET(request: NextRequest) {
         publishedAt: publishedAt,
         thumbnailUrl: item.snippet.thumbnails.medium.url,
         viewCount: item.statistics.viewCount || "0",
+        duration: formatDuration(duration),
+        isShort: isShort,
         risingScore: calculateRisingScore(viewCount, publishedAt)
       };
     });
+
+    // タイプに基づいてフィルタリング
+    if (type === 'short') {
+      formattedItems = formattedItems.filter((item: any) => item.isShort);
+    } else {
+      formattedItems = formattedItems.filter((item: any) => !item.isShort);
+    }
 
     // 急上昇度でソート（降順）
     formattedItems.sort((a: any, b: any) => b.risingScore - a.risingScore);

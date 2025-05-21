@@ -2,97 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 120, 40, 200; /* 紫色の開始 */
+  --background-end-rgb: 30, 90, 180; /* 青色の終了 */
+  --accent-color-1: 255, 100, 100; /* ピンク系アクセント */
+  --accent-color-2: 100, 230, 255; /* 水色系アクセント */
+  --toggle-bg: 80, 80, 80; /* トグルの背景色 */
+  --toggle-active: 255, 100, 100; /* トグルのアクティブ色 */
+}
+
+@media (prefers-color-scheme: light) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --foreground-rgb: 30, 30, 30;
+    --background-start-rgb: 220, 180, 255; /* 明るい紫色の開始 */
+    --background-end-rgb: 180, 220, 255; /* 明るい青色の終了 */
   }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
+  background: 
+    radial-gradient(circle at 100% 20%, rgba(var(--accent-color-1), 0.15) 0%, transparent 25%),
+    radial-gradient(circle at 20% 80%, rgba(var(--accent-color-2), 0.15) 0%, transparent 25%),
+    linear-gradient(
+      135deg,
+      rgb(var(--background-start-rgb)),
       rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    );
+  background-attachment: fixed;
 }
 
 .container {
-  max-width: 800px;
+  width: 100%;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+}
+
+/* ビデオカードリンクのスタイル */
+.video-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  cursor: pointer;
 }
 
 .video-card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s, box-shadow 0.3s;
+  width: 100%;
 }
 
-.video-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.video-card-link:hover .video-card {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 0 15px rgba(var(--accent-color-2), 0.3);
+}
+
+/* 動画カードのフレックスレイアウト */
+.video-card .flex {
+  display: flex;
+  width: 100%;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.video-card .flex-shrink-0 {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.video-card .flex > div:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.video-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem 0;
+  height: 100%;
+}
+
+/* 動画情報の行間調整 */
+.video-info h2 {
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #ffffff, #f0f0f0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.video-info p {
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.video-info .text-yellow-400 {
+  margin-bottom: 0.25rem;
+}
+
+.video-info .text-xs {
+  margin-bottom: 0.25rem;
 }
 
 .button {
-  background-color: #ff0000;
+  background: linear-gradient(135deg, #ff6b6b, #ff3333);
   color: white;
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 30px;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  min-width: 100px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  width: 120px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3);
 }
 
 .button:hover {
-  background-color: #cc0000;
+  background: linear-gradient(135deg, #ff5555, #ff0000);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255, 0, 0, 0.4);
 }
 
 .button:disabled {
-  background-color: #888;
+  background: linear-gradient(135deg, #aaa, #888);
   cursor: not-allowed;
-}
-
-/* YouTube視聴ボタンのスタイル */
-.youtube-link {
-  background-color: #ff0000;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.youtube-link:hover {
-  background-color: #cc0000;
-  text-decoration: none;
+  transform: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .loading {
@@ -117,26 +174,47 @@ input[type="text"] {
   min-height: 48px;
   width: 100%;
   font-size: 1.5rem;
-  border: 10px solid #000000;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  padding: 0 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
+  color: white;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (min-width: 768px) {
-  input[type="text"] {
-    min-width: 300px;
-  }
+input[type="text"]:focus {
+  outline: none;
+  border-color: rgba(var(--accent-color-2), 0.8);
+  box-shadow: 0 4px 12px rgba(var(--accent-color-2), 0.3);
+}
+
+input[type="text"]::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* タイトルと説明のスタイル */
 .page-title {
   width: 100%;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.1rem;
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #ff7eb3, #ffab5c, #ffff8f, #9bffbf, #a6c7ff, #cf9fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
 }
 
 .page-description {
   width: 100%;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* 検索フォーム関連のスタイル */
@@ -144,31 +222,172 @@ input[type="text"] {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .search-form input[type="text"] {
-  width: 100%;
-  max-width: 800px;
-  min-height: 48px;
-  font-size: 1.5rem;
-  border: 1px solid #444;
   margin-bottom: 1rem;
+  max-width: 100%;
+  width: 100%;
 }
 
 .search-form .button {
-  margin: 0 auto;
+  align-self: center;
+  width: 100%;
+  max-width: 200px;
+}
+
+/* トグルスイッチのスタイル */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  justify-content: center;
+  min-width: 220px; /* 幅を広げて「ショート動画」「ロング動画」に対応 */
+  width: 220px; /* 固定幅 */
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  margin-right: 10px;
+  flex-shrink: 0; /* 縮小されないように */
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(var(--toggle-bg), 0.5);
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: rgba(var(--toggle-active), 0.8);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(30px);
+}
+
+.toggle-label {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  width: 140px; /* 幅を広げて「ショート動画」「ロング動画」に対応 */
+  text-align: left; /* 左揃え */
 }
 
 @media (min-width: 768px) {
   .search-form {
     flex-direction: row;
-    justify-content: center;
-    gap: 1rem;
+    justify-content: space-between;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
   }
   
   .search-form input[type="text"] {
     margin-bottom: 0;
+    flex-grow: 1;
+    max-width: none;
+    min-width: 0;
+  }
+  
+  .toggle-container {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    margin-right: 0;
+    flex-grow: 0;
+    white-space: nowrap;
+    width: 220px; /* 幅を広げて「ショート動画」「ロング動画」に対応 */
+    min-width: 220px; /* 最小幅も設定 */
+    justify-content: flex-start; /* PCビューでは左揃え */
+  }
+  
+  .search-form .button {
+    margin-left: 0;
+    flex-shrink: 0;
+    width: 120px;
+    max-width: 120px;
+    min-width: 120px; /* 最小幅も設定 */
   }
 }
+
+/* メディアクエリの調整 */
+@media (max-width: 767px) {
+  .video-card .flex {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .video-card .flex-shrink-0 {
+    margin-bottom: 1rem;
+  }
+}
+
+/* アニメーション効果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container > * {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.container > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.container > *:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.grid > * {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* 動画カードに追加のスタイル */
+.video-card img {
+  border-radius: 10px;
+  transition: transform 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.video-card-link:hover img {
+  transform: scale(1.03);
+}
+
