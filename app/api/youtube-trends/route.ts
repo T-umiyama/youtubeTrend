@@ -1,39 +1,39 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
-// 急上昇度の計算関数
+// Function to calculate trending score
 function calculateRisingScore(viewCount: number, publishedAt: string): number {
   const now = new Date();
   const publishDate = new Date(publishedAt);
   
-  // 公開からの経過時間（日単位）
+  // Calculate time elapsed in days
   const diffTime = now.getTime() - publishDate.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
   
-  // 最低1日として計算（0での除算を防ぐ）
+  // Use minimum 1 day to avoid division by zero
   const effectiveDays = Math.max(diffDays, 1);
   
-  // 急上昇度 = 再生回数 ÷ 経過日数
+  // Trending score = view count ÷ days elapsed
   return viewCount / effectiveDays;
 }
 
-// ISO 8601形式の動画時間を読みやすい形式に変換
+// Convert ISO 8601 duration format to readable format
 function formatDuration(isoDuration: string): string {
-  // PT1H23M45S のような形式から時間、分、秒を抽出
+  // Extract hours, minutes, seconds from format like PT1H23M45S
   const matches = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!matches) return '';
   
-  const hours = matches[1] ? `${matches[1]}時間` : '';
-  const minutes = matches[2] ? `${matches[2]}分` : '';
-  const seconds = matches[3] ? `${matches[3]}秒` : '';
+  const hours = matches[1] ? `${matches[1]}h` : '';
+  const minutes = matches[2] ? `${matches[2]}m` : '';
+  const seconds = matches[3] ? `${matches[3]}s` : '';
   
-  return `${hours}${minutes}${seconds}`;
+  return `${hours} ${minutes} ${seconds}`.trim();
 }
 
-// 動画がショート動画かどうかを判定
+// Determine if a video is a short video
 function isShortVideo(duration: string): boolean {
-  // PT5M以下ならショート動画と判定（5分以下）
-  // より正確な判定には他の要素も必要かもしれませんが、簡易的な判定として
+  // Consider videos <= 5 minutes as short videos
+  // This is a simple heuristic, more accurate determination may require additional factors
   const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!matches) return false;
   
@@ -42,45 +42,45 @@ function isShortVideo(duration: string): boolean {
   const seconds = parseInt(matches[3] || '0');
   
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-  return totalSeconds <= 300; // 5分 = 300秒
+  return totalSeconds <= 300; // 5 minutes = 300 seconds
 }
 
 export async function GET(request: NextRequest) {
   try {
-    // YouTube Data API v3 の API キー
+    // YouTube Data API v3 key
     const apiKey = process.env.YOUTUBE_API_KEY;
     
     if (!apiKey) {
       return NextResponse.json(
-        { error: "YouTube API キーが設定されていません" },
+        { error: "YouTube API key is not configured" },
         { status: 500 }
       );
     }
 
-    // URLからパラメータを取得
+    // Get parameters from URL
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword');
-    const type = searchParams.get('type') || 'long'; // デフォルトはロング動画
+    const type = searchParams.get('type') || 'long'; // Default is long video
 
     if (!keyword) {
       return NextResponse.json(
-        { error: "検索キーワードが指定されていません" },
+        { error: "No search keyword provided" },
         { status: 400 }
       );
     }
 
-    // 検索期間の設定（7日前～30日前の動画を検索）
+    // Set search period (7-30 days ago)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     
-    // ステップ1: Search API で特定キーワードの7日以上前の動画を検索
+    // Step 1: Search API - find videos with specific keyword from 7-30 days ago
     const searchResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(keyword)}&type=video&order=viewCount&publishedAfter=${encodeURIComponent(thirtyDaysAgo.toISOString())}&publishedBefore=${encodeURIComponent(sevenDaysAgo.toISOString())}&maxResults=50&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
 
     if (!searchResponse.ok) {
-      throw new Error(`YouTube Search API エラー: ${searchResponse.status}`);
+      throw new Error(`YouTube Search API error: ${searchResponse.status}`);
     }
 
     const searchData = await searchResponse.json();
@@ -89,22 +89,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ items: [] });
     }
 
-    // 検索結果から動画IDを抽出
+    // Extract video IDs from search results
     const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
 
-    // ステップ2: Videos API で詳細情報を取得（視聴回数と動画の長さなど）
+    // Step 2: Videos API - get detailed information (view count and video duration)
     const videosResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
 
     if (!videosResponse.ok) {
-      throw new Error(`YouTube Videos API エラー: ${videosResponse.status}`);
+      throw new Error(`YouTube Videos API error: ${videosResponse.status}`);
     }
 
     const videosData = await videosResponse.json();
 
-    // ステップ3: 動画のタイプでフィルタリングし、急上昇度を計算してソート
+    // Step 3: Filter by video type, calculate trending score, and sort
     let formattedItems = videosData.items.map((item: any) => {
       const viewCount = parseInt(item.statistics.viewCount || "0");
       const publishedAt = item.snippet.publishedAt;
@@ -124,22 +124,22 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // タイプに基づいてフィルタリング
+    // Filter based on video type
     if (type === 'short') {
       formattedItems = formattedItems.filter((item: any) => item.isShort);
     } else {
       formattedItems = formattedItems.filter((item: any) => !item.isShort);
     }
 
-    // 急上昇度でソート（降順）
+    // Sort by trending score (descending)
     formattedItems.sort((a: any, b: any) => b.risingScore - a.risingScore);
 
-    // 上位10件を返す
+    // Return top 10 results
     return NextResponse.json({ items: formattedItems.slice(0, 10) });
   } catch (error) {
-    console.error("YouTube API エラー:", error);
+    console.error("YouTube API error:", error);
     return NextResponse.json(
-      { error: "動画の取得に失敗しました" },
+      { error: "Failed to fetch videos" },
       { status: 500 }
     );
   }

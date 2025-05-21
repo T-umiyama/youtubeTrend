@@ -9,11 +9,11 @@ interface Video {
   publishedAt: string;
   thumbnailUrl: string;
   viewCount: string;
-  risingScore?: number; // 急上昇度
-  duration?: string; // 動画の長さ
+  risingScore?: number; // Rising score
+  duration?: string; // Video duration
 }
 
-// 動画タイプを管理するための型
+// Type for video type management
 type VideoType = "short" | "long";
 
 export default function Home() {
@@ -21,11 +21,11 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
-  const [videoType, setVideoType] = useState<VideoType>("long"); // デフォルトはロング動画
+  const [videoType, setVideoType] = useState<VideoType>("long"); // Default is long video
 
   const fetchTrendingVideos = async () => {
     if (!keyword.trim()) {
-      setError("キーワードを入力してください");
+      setError("Please enter a keyword");
       return;
     }
 
@@ -33,23 +33,23 @@ export default function Home() {
     setError(null);
     
     try {
-      // クエリパラメータにビデオタイプを追加
+      // Add video type to query parameters
       const response = await fetch(`/api/youtube-trends?keyword=${encodeURIComponent(keyword)}&type=${videoType}`);
       
       if (!response.ok) {
-        throw new Error("データの取得に失敗しました");
+        throw new Error("Failed to fetch data");
       }
       
       const data = await response.json();
       setVideos(data.items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 日付から経過日数を計算する関数
+  // Calculate days ago from a date
   const getDaysAgo = (dateString: string): number => {
     const publishedDate = new Date(dateString);
     const today = new Date();
@@ -57,22 +57,22 @@ export default function Home() {
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // ビデオタイプを切り替える関数
+  // Function to toggle video type
   const toggleVideoType = () => {
     setVideoType(prevType => prevType === "short" ? "long" : "short");
   };
 
   return (
     <main className="container">
-      <h1 className="page-title">✨🔥 YouTubeトレンドハンター 🔥✨</h1>
-      <p className="page-description">気になるワードを入れるだけ！今アツい動画をサクッと発見！💫</p>
+      <h1 className="page-title">✨🔥 YouTube Trend Hunter 🔥✨</h1>
+      <p className="page-description">Enter a keyword and discover trending videos instantly! 💫</p>
       
       <div className="search-form">
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="検索キーワードを入力"
+          placeholder="Enter search keyword"
           onKeyDown={(e) => e.key === 'Enter' && fetchTrendingVideos()}
         />
         
@@ -85,7 +85,7 @@ export default function Home() {
             />
             <span className="toggle-slider"></span>
           </label>
-          <span className="toggle-label">{videoType === "short" ? "ショート動画" : "ロング動画"}</span>
+          <span className="toggle-label">{videoType === "short" ? "Short Video" : "Long Video"}</span>
         </div>
         
         <button 
@@ -93,13 +93,13 @@ export default function Home() {
           onClick={fetchTrendingVideos}
           disabled={isLoading}
         >
-          {isLoading ? <span className="loading"></span> : '検索'}
+          {isLoading ? <span className="loading"></span> : 'Search'}
         </button>
       </div>
       
       {error && (
         <div className="text-red-500 mb-4">
-          エラー: {error}
+          Error: {error}
         </div>
       )}
       
@@ -123,22 +123,41 @@ export default function Home() {
                     />
                   </div>
                   <div className="video-info">
-                    <h2>{video.title}</h2>
-                    <p className="text-gray-300">チャンネル名: {video.channelTitle}</p>
-                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm text-gray-400">
-                      <p>公開日: {new Date(video.publishedAt).toLocaleDateString()} （{getDaysAgo(video.publishedAt)}日前）</p>
-                      <p>再生回数: {parseInt(video.viewCount).toLocaleString()}</p>
-                      {video.duration && <p>長さ: {video.duration}</p>}
+                    <h2 className="video-title">{video.title}</h2>
+                    <p className="channel-name">Channel: {video.channelTitle}</p>
+                    
+                    <div className="video-stats">
+                      <div className="video-stat-item">
+                        <span className="stat-label">Published:</span> 
+                        <span className="stat-value">
+                          {new Date(video.publishedAt).toLocaleDateString()}
+                          <br />
+                          ({getDaysAgo(video.publishedAt)} days ago)
+                        </span>
+                      </div>
+                      
+                      <div className="video-stat-item">
+                        <span className="stat-label">Views:</span> 
+                        <span className="stat-value">{parseInt(video.viewCount).toLocaleString()}</span>
+                      </div>
+                      
+                      {video.duration && (
+                        <div className="video-stat-item">
+                          <span className="stat-label">Length:</span> 
+                          <span className="stat-value">{video.duration}</span>
+                        </div>
+                      )}
                     </div>
+                    
                     {video.risingScore && (
-                      <>
-                        <p className="text-yellow-400">
-                          急上昇度: {Math.round(video.risingScore).toLocaleString()}
+                      <div className="trending-score-container">
+                        <p className="trending-score">
+                          Trending Score: {Math.round(video.risingScore).toLocaleString()}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          ※急上昇度 ＝再生数 ÷ 経過日数
+                        <p className="trending-formula">
+                          *Trending Score = Views ÷ Days since published
                         </p>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
